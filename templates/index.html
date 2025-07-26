@@ -1,23 +1,195 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Todo App</title>
+    <title>Todo with Due Date</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            color: #dddddd;
+            overflow: hidden;
+        }
+
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            width: 100%;
+            height: 100%;
+            background: black;
+        }
+
+        .container {
+            background-color: rgba(43, 43, 43, 0.9);
+            padding: 30px;
+            border-radius: 10px;
+            width: 600px;
+            margin: 80px auto;
+            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        form {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        input, button {
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+        }
+
+        input[type="text"], input[type="date"] {
+            width: 45%;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #555;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background-color: #777;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background-color: #3a3a3a;
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .meta {
+            font-size: 12px;
+            color: #bbbbbb;
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+
+        .actions {
+            margin-top: 8px;
+        }
+
+        a {
+            color: #84b3f2;
+            text-decoration: none;
+            margin-right: 10px;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        hr {
+            margin: 30px 0;
+            border-color: #444;
+        }
+    </style>
 </head>
 <body>
-    <h1>Simple Todo App</h1>
+    <canvas id="starfield"></canvas>
 
-    <form action="/create-todo" method="post">
-        <input type="text" name="item" placeholder="Enter a new todo" required>
-        <button type="submit">Add</button>
-    </form>
+    <div class="container">
+        <h1>🖤 My Todo List</h1>
 
-    <h2>Todo List:</h2>
-    <ul>
-        {% for todo in todos %}
-            <li>{{ todo }}</li>
-        {% else %}
-            <li>No todos yet!</li>
-        {% endfor %}
-    </ul>
+        <form action="/create-todo" method="post">
+            <input type="text" name="task" placeholder="Enter task" required>
+            <input type="date" name="due" value="{{ today }}" required>
+            <button type="submit">Add Task</button>
+        </form>
+
+        <ul>
+            {% for todo in todos %}
+            <li>
+                {{ todo.task }} (Due: {{ todo.due }})
+                <div class="meta">
+                    🕓 Created: {{ todo.created_at.strftime('%Y-%m-%d %H:%M') }}<br>
+                    ✏️ Last Updated: {{ todo.updated_at.strftime('%Y-%m-%d %H:%M') }}
+                </div>
+                <div class="actions">
+                    <form action="/delete-todo/{{ todo.id }}" method="post" style="display:inline;">
+                        <button type="submit">Delete</button>
+                    </form>
+                    <form action="/edit-todo/{{ todo.id }}" method="post" style="display:inline;">
+                        <input type="text" name="task" value="{{ todo.task }}" required>
+                        <input type="date" name="due" value="{{ todo.due }}" required>
+                        <button type="submit">Edit</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <hr>
+        <div style="text-align:center;">
+            <a href="/">🔁 View All</a>
+            <a href="/todos/upcoming">⏳ View Upcoming</a>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function createStars() {
+            stars = [];
+            for (let i = 0; i < 200; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 1.5,
+                    speed: Math.random() * 0.5 + 0.2
+                });
+            }
+        }
+
+        function animateStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#ffffff";
+            for (let star of stars) {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, 2 * Math.PI);
+                ctx.fill();
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * canvas.width;
+                }
+            }
+            requestAnimationFrame(animateStars);
+        }
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            createStars();
+        });
+
+        resizeCanvas();
+        createStars();
+        animateStars();
+    </script>
 </body>
 </html>
